@@ -54,7 +54,7 @@ export function FlowTable({ rows, maxHeight, compact }: { rows: OptionsFlowPrint
     { key: "dte", header: "DTE", align: "right", cell: (r) => <span className="num">{r.dte}</span>, sortValue: (r) => r.dte, hideOnMobile: true },
     { key: "premium", header: "Premium", align: "right", cell: (r) => <span className="num text-chrome">{fmtCompact(r.premium, { currency: true })}</span>, sortValue: (r) => r.premium },
     { key: "size", header: "Contracts", align: "right", cell: (r) => <span className="num">{fmtInt(r.contracts)}</span>, sortValue: (r) => r.contracts, hideOnMobile: true },
-    { key: "px", header: "Price", align: "right", cell: (r) => <span className="num">{fmtPrice(r.price)}</span>, hideOnMobile: true },
+    { key: "px", header: "Price", align: "right", cell: (r) => <span className="num">{fmtPrice(r.price, { decimals: 2 })}</span>, hideOnMobile: true },
     { key: "spot", header: "Spot", align: "right", cell: (r) => <span className="num text-steel-300">{fmtPrice(r.spot)}</span>, hideOnMobile: true },
     { key: "voi", header: "Vol / OI", align: "right", cell: (r) => <span className="num text-steel-300">{r.volume !== null && r.openInterest ? `${fmtCompact(r.volume)} / ${fmtCompact(r.openInterest)}` : DASH}</span>, sortValue: (r) => (r.volume && r.openInterest ? r.volume / r.openInterest : null), hideOnMobile: true },
     { key: "iv", header: "IV", align: "right", cell: (r) => <span className="num">{fmtIv(r.impliedVolatility)}</span>, hideOnMobile: true },

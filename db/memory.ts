@@ -482,7 +482,7 @@ export function memoryRepositories(): Repositories {
           // Generation facts are immutable; lifecycle only moves forward.
           const merged: AtlasSetup = TERMINAL.includes(prev.status)
             ? prev
-            : { ...setup, generatedAt: prev.generatedAt, explanation: prev.explanation, statusHistory: setup.statusHistory.length >= prev.statusHistory.length ? setup.statusHistory : prev.statusHistory };
+            : { ...prev, status: setup.status, statusHistory: setup.statusHistory.length >= prev.statusHistory.length ? setup.statusHistory : prev.statusHistory };
           list[i] = merged;
           persist();
           return merged;

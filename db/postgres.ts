@@ -321,7 +321,7 @@ export function postgresRepositories(url: string): Repositories {
         svc(async (tx) => {
           const existing = (await tx<{ payload: AtlasSetup; status: AtlasSetup["status"] }[]>`select payload, status from atlas_setups where id = ${s.id} for update`)[0];
           if (existing && ["invalidated", "target-reached", "expired"].includes(existing.status)) return setupFromRow(existing);
-          const payload: AtlasSetup = existing ? { ...s, generatedAt: existing.payload.generatedAt, explanation: existing.payload.explanation } : s;
+          const payload: AtlasSetup = existing ? { ...existing.payload, status: s.status, statusHistory: s.statusHistory } : s;
           const closed = s.statusHistory.find((h) => ["invalidated", "target-reached", "expired"].includes(h.status));
           await tx`insert into atlas_setups (id, symbol, mode, direction, trade_type, score, coverage, status, entry_low, entry_high, target_low, target_high,
               invalidation, payload, config_version, data_mode, generated_at, expires_at, closed_at)

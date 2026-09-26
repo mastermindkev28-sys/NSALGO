@@ -346,9 +346,9 @@ async function barsSinceGeneration(setup: AtlasSetup): Promise<Bar[]> {
 export async function trackSetup(fresh: AtlasSetup): Promise<AtlasSetup> {
   const repo = db().atlas;
   const existing = await repo.getSetup(fresh.id);
-  const base: AtlasSetup = existing
-    ? { ...fresh, generatedAt: existing.generatedAt, explanation: existing.explanation, status: existing.status, statusHistory: existing.statusHistory }
-    : fresh;
+  // Generation-time facts (levels, score, structure, explanation) are immutable;
+  // only the lifecycle advances. Later scans never rewrite a recorded setup.
+  const base: AtlasSetup = existing ?? fresh;
   const lc = evaluateLifecycle(base, await barsSinceGeneration(base));
   return repo.upsertSetup({ ...base, status: lc.status, statusHistory: lc.statusHistory });
 }
@@ -397,7 +397,7 @@ export async function scan(mode: AtlasMode, opts: { persist?: boolean } = {}): P
     let setups = top.map((a) => a.setup);
     if (opts.persist !== false) {
       try {
-        setups = await Promise.all(setups.map(trackSetup));
+        setups = (await Promise.all(setups.map(trackSetup))).sort((a, b) => b.score.value - a.score.value);
       } catch (e) {
         log.error("atlas", "Failed to persist setups", { error: (e as Error).message });
       }
@@ -447,7 +447,8 @@ export async function marketBrief() {
 export async function backfillSimulatedHistory(sessions = 30): Promise<number> {
   if (!providers().market.isMock) return 0;
   const repo = db().atlas;
-  if ((await repo.countSetups()) > 0) return 0;
+  const existing = await repo.listSetups({ mode: "swing", limit: 5000 });
+  if (existing.some((s) => s.id.endsWith("-bf"))) return 0;
   const cfg = await getAtlasConfig();
   const today = currentSessionDate();
   const dates = tradingDaysBack(today, sessions + 1).slice(0, -1);

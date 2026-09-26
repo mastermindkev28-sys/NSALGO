@@ -136,7 +136,7 @@ export function SearchCommand() {
             </div>
             <Command.List className="max-h-[56vh] overflow-y-auto p-2">
               {!q.trim() ? (
-                <Command.Group heading="Quick symbols" className="[&_[cmdk-group-heading]]:eyebrow [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2">
+                <Command.Group heading="Quick symbols" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.22em] [&_[cmdk-group-heading]]:text-steel-500">
                   {QUICK.map((s) => (
                     <Item key={s} value={`q-${s}`} onSelect={() => go(`/symbols/${s}`)} icon={<Hash />} title={s} subtitle="Overview, chart, news, options & Atlas" />
                   ))}
@@ -145,7 +145,7 @@ export function SearchCommand() {
                 <>
                   <Command.Empty className="px-3 py-8 text-center text-[13px] text-steel-400">{loading ? "Searching…" : `No results for “${q}”.`}</Command.Empty>
                   {results?.groups.map((g) => (
-                    <Command.Group key={g.type} heading={g.label} className="[&_[cmdk-group-heading]]:eyebrow [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2">
+                    <Command.Group key={g.type} heading={g.label} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.22em] [&_[cmdk-group-heading]]:text-steel-500">
                       {g.hits.map((h, i) => (
                         <Item key={`${g.type}-${i}-${h.href}`} value={`${g.type}-${i}-${h.href}`} onSelect={() => go(h.href)} icon={ICONS[h.type]} title={h.title} subtitle={h.subtitle} meta={h.meta} />
                       ))}
