@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "crons": [
+    { "path": "/api/cron/sec-ingest", "schedule": "15 22 * * 1-5" },
+    { "path": "/api/cron/congress-ingest", "schedule": "30 22 * * *" },
+    { "path": "/api/cron/calendar-refresh", "schedule": "45 11 * * *" },
+    { "path": "/api/cron/atlas-swing", "schedule": "10 21 * * 1-5" },
+    { "path": "/api/cron/atlas-lifecycle", "schedule": "40 21 * * 1-5" },
+    { "path": "/api/cron/cleanup", "schedule": "0 8 * * *" }
+  ]
+}
