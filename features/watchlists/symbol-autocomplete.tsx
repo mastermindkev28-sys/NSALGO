@@ -12,11 +12,9 @@ export function SymbolAutocomplete({ onSelect, placeholder = "Add symbol — e.g
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const box = useRef<HTMLDivElement>(null);
+  const shown = q.trim() ? items : [];
   useEffect(() => {
-    if (!q.trim()) {
-      setItems([]);
-      return;
-    }
+    if (!q.trim()) return;
     const ctrl = new AbortController();
     const t = setTimeout(() => {
       fetch(`/api/market/search?q=${encodeURIComponent(q)}&limit=8`, { signal: ctrl.signal })
@@ -49,13 +47,13 @@ export function SymbolAutocomplete({ onSelect, placeholder = "Add symbol — e.g
       <Input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        onFocus={() => items.length && setOpen(true)}
+        onFocus={() => shown.length && setOpen(true)}
         onKeyDown={(e) => {
-          if (e.key === "ArrowDown") setActive((a) => Math.min(items.length - 1, a + 1));
+          if (e.key === "ArrowDown") setActive((a) => Math.min(shown.length - 1, a + 1));
           else if (e.key === "ArrowUp") setActive((a) => Math.max(0, a - 1));
-          else if (e.key === "Enter" && items[active]) {
+          else if (e.key === "Enter" && shown[active]) {
             e.preventDefault();
-            choose(items[active]!);
+            choose(shown[active]!);
           } else if (e.key === "Escape") setOpen(false);
         }}
         placeholder={placeholder}
@@ -65,9 +63,9 @@ export function SymbolAutocomplete({ onSelect, placeholder = "Add symbol — e.g
         aria-autocomplete="list"
         maxLength={40}
       />
-      {open && items.length ? (
+      {open && shown.length ? (
         <ul role="listbox" className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border border-line-strong bg-graphite-850 shadow-[var(--shadow-float)]">
-          {items.map((s, i) => (
+          {shown.map((s, i) => (
             <li key={s.symbol} role="option" aria-selected={i === active}>
               <button type="button" onMouseEnter={() => setActive(i)} onClick={() => choose(s)} className={cn("flex w-full items-center gap-3 px-3 py-2 text-left text-[12.5px]", i === active && "bg-white/[0.06]")}>
                 <span className="w-16 font-mono tracking-wider text-chrome">{s.symbol}</span>

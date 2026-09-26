@@ -11,8 +11,6 @@ export function usePoll<T>(url: string | null, intervalMs: number, initial: T): 
   const [data, setData] = useState<T>(initial);
   const [error, setError] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
-  const urlRef = useRef(url);
-  urlRef.current = url;
 
   useEffect(() => {
     if (!url) return;
@@ -25,7 +23,7 @@ export function usePoll<T>(url: string | null, intervalMs: number, initial: T): 
           const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
           if (!res.ok) throw new Error(String(res.status));
           const json = (await res.json()) as T;
-          if (!stopped && urlRef.current === url) {
+          if (!stopped) {
             setData(json);
             setError(false);
             setUpdatedAt(Date.now());

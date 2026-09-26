@@ -13,9 +13,11 @@ import { SearchTrigger } from "./search-command";
 
 export function TopNav({ signedIn, paid }: { signedIn: boolean; paid: boolean }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  // Menu state is tied to the path it was opened on, so navigating closes it.
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === pathname;
+  const setOpen = (fn: (o: boolean) => boolean) => setOpenOn(fn(open) ? pathname : null);
   const [scrolled, setScrolled] = useState(false);
-  useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 8);
     on();

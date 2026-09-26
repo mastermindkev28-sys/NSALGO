@@ -2,7 +2,7 @@
   "name": "nsalgo",
   "version": "0.1.0",
   "private": true,
-  "description": "NSALGO — financial intelligence platform. Home of ATLAS.",
+  "description": "NSALGO \u2014 financial intelligence platform. Home of ATLAS.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:migrate": "node scripts/migrate.mjs",
-    "jobs:run": "node --experimental-strip-types scripts/run-job.ts"
+    "jobs:run": "node scripts/run-job.mjs",
+    "check": "npm run typecheck && npm run lint && npm test"
   },
   "engines": {
     "node": ">=20.9"

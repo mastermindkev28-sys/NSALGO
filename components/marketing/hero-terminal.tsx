@@ -1,5 +1,5 @@
 import { Compass } from "lucide-react";
-import { RegimeBadge } from "@/components/atlas/primitives";
+import { RegimeBadge, regimeStructureLabel } from "@/components/atlas/primitives";
 import { LiveQuoteGrid } from "@/components/market/live-quote-grid";
 import { DataSourceBadge } from "@/components/ui/data-source";
 import { ScoreRing } from "@/components/ui/score-ring";
@@ -53,7 +53,7 @@ export function HeroTerminal({
             <div className="eyebrow mb-2">Market regime</div>
             <div className="flex items-center gap-2">
               <RegimeBadge regime={regime} />
-              <span className="text-[12px] text-steel-300">{regime.structure === "trend" ? "Trending" : "Range-bound"}</span>
+              <span className="text-[12px] text-steel-300">{regimeStructureLabel(regime)}</span>
             </div>
             <ul className="mt-3 space-y-1.5">
               {regime.signals.slice(0, 4).map((s) => (

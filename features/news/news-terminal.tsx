@@ -10,6 +10,7 @@ import { db } from "@/db";
 import { addDays, currentSessionDate } from "@/lib/market-time";
 import { fmtPrice, fmtTimeET, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { nowMs } from "@/lib/time";
 import { listEconomicEvents, listNews } from "@/services/intel";
 import { getQuotes } from "@/services/market";
 import { NEWS_CATEGORIES, type NewsCategory } from "@/types/news";
@@ -42,7 +43,7 @@ export async function NewsTerminal({ basePath, category, q, ticker }: { basePath
   const recentMentions = new Map<string, number>();
   if (all.ok) {
     for (const a of all.data) {
-      const recent = Date.now() - Date.parse(a.publishedAt) < 6 * 3600_000;
+      const recent = nowMs() - Date.parse(a.publishedAt) < 6 * 3600_000;
       for (const t of a.tickers) {
         mentions.set(t, (mentions.get(t) ?? 0) + 1);
         if (recent) recentMentions.set(t, (recentMentions.get(t) ?? 0) + 1);
@@ -173,7 +174,7 @@ export async function NewsTerminal({ basePath, category, q, ticker }: { basePath
           {events.ok ? (
             <ul className="divide-y divide-line/70 px-4 py-1">
               {events.data
-                .filter((e) => Date.parse(e.datetime) > Date.now() - 3600_000)
+                .filter((e) => Date.parse(e.datetime) > nowMs() - 3600_000)
                 .slice(0, 7)
                 .map((e) => (
                   <li key={e.id} className="py-2.5 text-[12px]">

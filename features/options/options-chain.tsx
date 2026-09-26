@@ -15,23 +15,22 @@ export function OptionsChainView({ initial, initialSymbol }: { initial: DataResu
   const [symbol, setSymbol] = useState(initialSymbol);
   const [input, setInput] = useState(initialSymbol);
   const [exp, setExp] = useState<string | undefined>(initial.ok ? initial.data.expiration : undefined);
-  const [data, setData] = useState<DataResult<OptionChain> | null>(initial);
-  const [first, setFirst] = useState(true);
+  const initialKey = `${initialSymbol}|${initial.ok ? initial.data.expiration : ""}`;
+  const key = `${symbol}|${exp ?? ""}`;
+  const [fetched, setFetched] = useState<{ key: string; data: DataResult<OptionChain> } | null>(null);
+  const data = key === initialKey ? initial : fetched?.key === key ? fetched.data : null;
 
   useEffect(() => {
-    if (first) {
-      setFirst(false);
-      return;
-    }
+    if (key === initialKey) return;
     const ctrl = new AbortController();
-    setData(null);
     fetch(`/api/options/chain?symbol=${encodeURIComponent(symbol)}${exp ? `&expiration=${exp}` : ""}`, { signal: ctrl.signal })
       .then((r) => r.json())
-      .then((j: DataResult<OptionChain> & { error?: { message: string } }) => setData(j.ok ? j : { ok: false, error: j.error ?? { code: "INTERNAL", message: "Chain unavailable" } } as DataResult<OptionChain>))
+      .then((j: DataResult<OptionChain> & { error?: { code: string; message: string } }) =>
+        setFetched({ key, data: j.ok ? j : ({ ok: false, error: j.error ?? { code: "INTERNAL", message: "Chain unavailable" } } as DataResult<OptionChain>) }),
+      )
       .catch(() => undefined);
     return () => ctrl.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- first render uses server data
-  }, [symbol, exp]);
+  }, [key, initialKey, symbol, exp]);
 
   const chain = data?.ok ? data.data : null;
   const strikes = chain ? [...new Set([...chain.calls, ...chain.puts].map((c) => c.strike))].sort((a, b) => a - b) : [];

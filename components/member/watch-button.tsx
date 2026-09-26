@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import type { Watchlist } from "@/types/domain";
 
 /** Adds a symbol to one of the member's watchlists (persisted server-side). */
 export function WatchButton({ symbol }: { symbol: string }) {
+  const router = useRouter();
   const [lists, setLists] = useState<Watchlist[] | null>(null);
   const load = () =>
     fetch("/api/watchlists")
@@ -43,7 +45,7 @@ export function WatchButton({ symbol }: { symbol: string }) {
             </DropdownItem>
           ))
         ) : (
-          <DropdownItem onSelect={() => (window.location.href = "/dashboard/watchlists")}>Create a watchlist</DropdownItem>
+          <DropdownItem onSelect={() => router.push("/dashboard/watchlists")}>Create a watchlist</DropdownItem>
         )}
       </DropdownContent>
     </Dropdown>

@@ -69,7 +69,19 @@ export function FactorBars({ components, limit, className, showWeights }: { comp
   );
 }
 
-export function RegimeBadge({ regime }: { regime: Pick<MarketRegime, "risk"> }) {
+/** Structure/volatility wording; "unavailable" when no regime inputs were available (never a default classification). */
+export function regimeStructureLabel(regime: Pick<MarketRegime, "structure" | "score">): string {
+  if (regime.score === null) return "Inputs unavailable";
+  return regime.structure === "trend" ? "Trending" : "Range-bound";
+}
+
+export function RegimeBadge({ regime }: { regime: Pick<MarketRegime, "risk"> & Partial<Pick<MarketRegime, "score">> }) {
+  if (regime.score === null)
+    return (
+      <Badge variant="neutral" size="sm">
+        Unavailable
+      </Badge>
+    );
   const label = regime.risk === "risk-on" ? "Risk-On" : regime.risk === "risk-off" ? "Risk-Off" : "Mixed";
   return (
     <Badge variant={regime.risk === "risk-on" ? "up" : regime.risk === "risk-off" ? "down" : "warn"} size="sm">

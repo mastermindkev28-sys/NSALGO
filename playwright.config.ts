@@ -6,7 +6,12 @@ export default defineConfig({
   testDir: "tests/e2e",
   timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
-  use: { baseURL: `http://localhost:${PORT}`, trace: "retain-on-failure" },
+  use: {
+    baseURL: `http://localhost:${PORT}`,
+    trace: "retain-on-failure",
+    // Optional: point at a preinstalled Chromium instead of the Playwright download.
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } : {},
+  },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
     { name: "mobile", use: { ...devices["Pixel 7"] } },

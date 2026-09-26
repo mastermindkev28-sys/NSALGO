@@ -42,26 +42,25 @@ export function OptionsScanner({ initial }: { initial: DataResult<OptionsScanRow
   const [right, setRight] = useState<"both" | "call" | "put">("both");
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [applied, setApplied] = useState<Record<string, string>>({});
-  const [data, setData] = useState<DataResult<OptionsScanRow[]> | null>(initial);
-  const [first, setFirst] = useState(true);
-
-  useEffect(() => {
-    if (first) {
-      setFirst(false);
-      return;
-    }
+  const query = (() => {
     const sp = new URLSearchParams({ preset, limit: "200" });
     if (right !== "both") sp.set("right", right);
     for (const [k, v] of Object.entries(applied)) if (v.trim()) sp.set(k, v.trim());
+    return sp.toString();
+  })();
+  const initialQuery = "preset=most-active&limit=200";
+  const [fetched, setFetched] = useState<{ q: string; data: DataResult<OptionsScanRow[]> } | null>(null);
+  const data = query === initialQuery ? initial : fetched?.q === query ? fetched.data : null;
+
+  useEffect(() => {
+    if (query === initialQuery) return;
     const ctrl = new AbortController();
-    setData(null);
-    fetch(`/api/options/scan?${sp}`, { signal: ctrl.signal })
+    fetch(`/api/options/scan?${query}`, { signal: ctrl.signal })
       .then((r) => r.json())
-      .then((j) => setData(j.ok ? j : { ok: false, error: j.error ?? { code: "INTERNAL", message: "Scan failed" } }))
+      .then((j) => setFetched({ q: query, data: j.ok ? j : { ok: false, error: j.error ?? { code: "INTERNAL", message: "Scan failed" } } }))
       .catch(() => undefined);
     return () => ctrl.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- first render uses server data
-  }, [preset, right, applied]);
+  }, [query]);
 
   return (
     <div>

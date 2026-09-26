@@ -6,7 +6,9 @@ export async function GET() {
   const started = Date.now();
   let database = "ok";
   try {
-    await db().users.count();
+    const repos = db();
+    if (repos.kind === "unavailable") throw new Error("not configured");
+    await repos.users.count();
   } catch {
     database = "unavailable";
   }

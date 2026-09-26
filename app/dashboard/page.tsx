@@ -19,6 +19,7 @@ import { WatchlistSnapshot } from "@/features/dashboard/watchlist-snapshot";
 import { fmtTimeET } from "@/lib/format";
 import { addDays, currentSessionDate } from "@/lib/market-time";
 import { cn } from "@/lib/utils";
+import { nowMs } from "@/lib/time";
 import { getMarketContext, scan } from "@/services/atlas/engine";
 import { getFlow, listEconomicEvents, listInstitutional, listNews } from "@/services/intel";
 import { getMovers, getQuotes, getSparks } from "@/services/market";
@@ -165,7 +166,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {events.ok ? (
               <ul className="divide-y divide-line/70 px-4">
                 {events.data
-                  .filter((e) => Date.parse(e.datetime) > Date.now() - 3600_000)
+                  .filter((e) => Date.parse(e.datetime) > nowMs() - 3600_000)
                   .slice(0, 6)
                   .map((e) => (
                     <li key={e.id} className="flex items-center justify-between gap-3 py-2.5 text-[12.5px]">

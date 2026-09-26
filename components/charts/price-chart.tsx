@@ -9,7 +9,6 @@ import {
   createChart,
   type IChartApi,
   type ISeriesApi,
-  type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -72,7 +71,7 @@ export function PriceChart({
 }) {
   const [range, setRange] = useState<HistoryRange>(initialRange);
   const [ind, setInd] = useState<Set<Indicator>>(new Set(defaultIndicators));
-  const [result, setResult] = useState<DataResult<Bar[]> | null>(null);
+  const [loaded, setLoaded] = useState<{ key: string; data: DataResult<Bar[]> } | null>(null);
   const [hover, setHover] = useState<Bar | null>(null);
   const el = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -80,14 +79,17 @@ export function PriceChart({
   const interval = spec.interval;
   const intraday = interval.endsWith("m") || interval === "1h";
 
+  const fetchKey = `${symbol}|${spec.fetch}|${interval}`;
+  const result = loaded?.key === fetchKey ? loaded.data : null;
+
   useEffect(() => {
     const ctrl = new AbortController();
-    setResult(null);
+    const key = `${symbol}|${spec.fetch}|${interval}`;
     fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}&range=${spec.fetch}&interval=${interval}`, { signal: ctrl.signal })
       .then((r) => r.json() as Promise<DataResult<Bar[]>>)
-      .then(setResult)
+      .then((data) => setLoaded({ key, data }))
       .catch((e) => {
-        if ((e as Error).name !== "AbortError") setResult({ ok: false, error: { code: "PROVIDER_UNAVAILABLE", message: "Chart data temporarily unavailable." } });
+        if ((e as Error).name !== "AbortError") setLoaded({ key, data: { ok: false, error: { code: "PROVIDER_UNAVAILABLE", message: "Chart data temporarily unavailable." } } });
       });
     return () => ctrl.abort();
   }, [symbol, spec.fetch, interval]);

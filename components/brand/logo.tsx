@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -5,10 +6,12 @@ import { cn } from "@/lib/utils";
  * northern ray, set in chrome. Precision, direction, navigation.
  */
 export function StarMark({ className, size = 22 }: { className?: string; size?: number }) {
+  // Unique per instance: a shared id breaks the fill when the first instance is hidden (display:none).
+  const gid = `ns-chrome-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" className={cn("shrink-0", className)} aria-hidden>
       <defs>
-        <linearGradient id="ns-chrome" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#ffffff" />
           <stop offset="0.55" stopColor="#dfe4eb" />
           <stop offset="1" stopColor="#8e98a6" />
@@ -18,7 +21,7 @@ export function StarMark({ className, size = 22 }: { className?: string; size?: 
       {/* diagonal hairline rays */}
       <path d="M9.6 11.1 16 17.5 22.4 11.1M9.6 23.9 16 17.5 22.4 23.9" stroke="#ffffff" strokeOpacity="0.28" strokeWidth="0.6" fill="none" />
       {/* primary star: long north ray */}
-      <path d="M16 1.5 17.55 15.95 26.5 17.5 17.55 19.05 16 28.5 14.45 19.05 5.5 17.5 14.45 15.95Z" fill="url(#ns-chrome)" />
+      <path d="M16 1.5 17.55 15.95 26.5 17.5 17.55 19.05 16 28.5 14.45 19.05 5.5 17.5 14.45 15.95Z" fill={`url(#${gid})`} />
       <circle cx="16" cy="17.5" r="1.05" fill="#07080a" />
     </svg>
   );

@@ -16,7 +16,8 @@ type Data = { rows: ScannerRow[]; configVersion: string; minScore: number; gener
 export function ScannerView({ initial }: { initial: Data }) {
   const router = useRouter();
   const [mode, setMode] = useState<"swing" | "day">("swing");
-  const [data, setData] = useState<Data | null>(initial);
+  const [fetched, setFetched] = useState<{ mode: string; data: Data } | null>(null);
+  const data = mode === "swing" ? initial : fetched?.mode === mode ? fetched.data : null;
   const [q, setQ] = useState("");
   const [sector, setSector] = useState("all");
   const [dir, setDir] = useState<"all" | "long" | "short">("all");
@@ -27,16 +28,12 @@ export function ScannerView({ initial }: { initial: Data }) {
   const [flags, setFlags] = useState<"all" | "qualifies" | "breakout" | "breakdown">("all");
 
   useEffect(() => {
-    if (mode === "swing") {
-      setData(initial);
-      return;
-    }
-    setData(null);
+    if (mode === "swing") return;
     fetch(`/api/atlas/scan?mode=${mode}`)
       .then((r) => r.json())
-      .then((j) => j.ok && setData(j.data))
+      .then((j) => j.ok && setFetched({ mode, data: j.data }))
       .catch(() => undefined);
-  }, [mode, initial]);
+  }, [mode]);
 
   const sectors = useMemo(() => [...new Set((data?.rows ?? []).map((r) => r.sector).filter((x): x is string => !!x))].sort(), [data]);
   const rows = (data?.rows ?? []).filter((r) => {

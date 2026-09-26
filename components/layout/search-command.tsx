@@ -85,10 +85,7 @@ export function SearchCommand() {
   }, []);
 
   useEffect(() => {
-    if (!q.trim()) {
-      setResults(null);
-      return;
-    }
+    if (!q.trim()) return;
     const t = setTimeout(async () => {
       ctrl.current?.abort();
       ctrl.current = new AbortController();
@@ -144,7 +141,7 @@ export function SearchCommand() {
               ) : (
                 <>
                   <Command.Empty className="px-3 py-8 text-center text-[13px] text-steel-400">{loading ? "Searching…" : `No results for “${q}”.`}</Command.Empty>
-                  {results?.groups.map((g) => (
+                  {(q.trim() ? results : null)?.groups.map((g) => (
                     <Command.Group key={g.type} heading={g.label} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.22em] [&_[cmdk-group-heading]]:text-steel-500">
                       {g.hits.map((h, i) => (
                         <Item key={`${g.type}-${i}-${h.href}`} value={`${g.type}-${i}-${h.href}`} onSelect={() => go(h.href)} icon={ICONS[h.type]} title={h.title} subtitle={h.subtitle} meta={h.meta} />

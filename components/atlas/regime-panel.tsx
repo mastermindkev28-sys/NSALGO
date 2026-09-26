@@ -2,7 +2,7 @@ import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { Panel, PanelBody, PanelHeader } from "@/components/ui/panel";
 import { cn } from "@/lib/utils";
 import type { MarketRegime } from "@/types/atlas";
-import { RegimeBadge } from "./primitives";
+import { RegimeBadge, regimeStructureLabel } from "./primitives";
 
 /** Market regime with its reasoning — every signal and its reading, including unavailable inputs. */
 export function RegimePanel({ regime, className, compact }: { regime: MarketRegime; className?: string; compact?: boolean }) {
@@ -14,7 +14,7 @@ export function RegimePanel({ regime, className, compact }: { regime: MarketRegi
           <span className="flex items-center gap-2">
             <RegimeBadge regime={regime} />
             <span className="text-steel-300">
-              {regime.structure === "trend" ? "Trending" : "Range-bound"} · {regime.volatility.replace("-volatility", "").replace("normal", "normal")} volatility
+              {regime.score === null ? regimeStructureLabel(regime) : `${regimeStructureLabel(regime)} · ${regime.volatility.replace("-volatility", "")} volatility`}
             </span>
           </span>
         }

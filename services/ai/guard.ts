@@ -9,10 +9,13 @@ function numbersIn(text: string): number[] {
   return (text.match(NUM) ?? []).map((s) => Number(s.replaceAll(",", ""))).filter((n) => Number.isFinite(n));
 }
 
+/** Structural constants that carry no market information (score scale, "N:1" ratios). */
+const CONSTANTS = [0, 1, 100];
+
 export function allowedNumbers(digest: unknown): number[] {
   const json = JSON.stringify(digest);
   const base = numbersIn(json);
-  const extra: number[] = [];
+  const extra: number[] = [...CONSTANTS];
   for (const n of base) {
     extra.push(Math.abs(n), Math.round(n), Math.round(n * 10) / 10, Math.round(n * 100) / 100, Math.round(n * 100)); // 0.62 → 62 (%)
   }

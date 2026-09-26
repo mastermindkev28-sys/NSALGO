@@ -84,6 +84,6 @@ export function route<Q extends z.ZodType | undefined = undefined, B extends z.Z
 }
 
 /** DataResult → HTTP response (provider failures are 200 with ok:false so clients can degrade gracefully). */
-export function dataResponse<T>(r: { ok: boolean }, cacheSeconds = 0) {
+export function dataResponse(r: { ok: boolean }, cacheSeconds = 0) {
   return NextResponse.json(r, { headers: cacheSeconds ? { "Cache-Control": `private, max-age=${cacheSeconds}` } : { "Cache-Control": "no-store" } });
 }

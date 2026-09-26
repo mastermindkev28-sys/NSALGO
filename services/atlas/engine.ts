@@ -142,8 +142,13 @@ function flowSummary(ctx: MarketContext, symbol: string): FlowSummary | null {
   let bear = 0;
   let classified = 0;
   for (const p of prints) {
-    if (p.sentiment === "bullish") (bull += p.premium), classified++;
-    else if (p.sentiment === "bearish") (bear += p.premium), classified++;
+    if (p.sentiment === "bullish") {
+      bull += p.premium;
+      classified++;
+    } else if (p.sentiment === "bearish") {
+      bear += p.premium;
+      classified++;
+    }
   }
   return { bullishPremium: bull, bearishPremium: bear, classified, total: prints.length };
 }

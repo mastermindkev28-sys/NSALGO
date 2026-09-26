@@ -1,4 +1,4 @@
-import { RegimeBadge } from "@/components/atlas/primitives";
+import { RegimeBadge, regimeStructureLabel } from "@/components/atlas/primitives";
 import { AtlasWordmark } from "@/components/brand/logo";
 import { Change } from "@/components/ui/change";
 import { DataSourceBadge } from "@/components/ui/data-source";
@@ -19,7 +19,7 @@ export function AtlasHeaderStrip({ ctx, status }: { ctx: MarketContext; status: 
     { label: "SPY", value: fmtPrice(spy?.last), sub: <Change percent={spy?.changePercent ?? null} size="xs" /> },
     { label: "QQQ", value: fmtPrice(qqq?.last), sub: <Change percent={qqq?.changePercent ?? null} size="xs" /> },
     { label: "VIX", value: fmtPrice(vix?.last), sub: <Change percent={vix?.changePercent ?? null} size="xs" /> },
-    { label: "Market regime", value: <RegimeBadge regime={ctx.regime} />, sub: <span className="text-[11px] text-steel-500">{ctx.regime.structure === "trend" ? "Trending" : "Range-bound"}</span> },
+    { label: "Market regime", value: <RegimeBadge regime={ctx.regime} />, sub: <span className="text-[11px] text-steel-500">{regimeStructureLabel(ctx.regime)}</span> },
     { label: "Risk environment", value: <span className="capitalize">{ctx.regime.riskEnvironment}</span> },
     { label: "Breadth", value: b?.advancers != null && b.decliners != null ? `${b.advancers} / ${b.decliners}` : "—", sub: <span className="text-[11px] text-steel-500">adv / dec</span> },
     { label: "Volatility", value: <span className="capitalize">{ctx.regime.volatility.replace("-volatility", "")}</span> },

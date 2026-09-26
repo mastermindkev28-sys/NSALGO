@@ -12,20 +12,21 @@ import { fmtDateTimeET } from "@/lib/format";
 import { recentLogs } from "@/lib/logger";
 import { JOBS } from "@/services/jobs";
 import { requirePermission } from "@/services/membership";
+import { nowMs } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "System Health" };
 
 export default async function SystemAdmin() {
   await requirePermission("system.view");
-  const started = Date.now();
+  const started = nowMs();
   let dbOk = true;
   try {
     await db().users.count();
   } catch {
     dbOk = false;
   }
-  const dbLatency = Date.now() - started;
+  const dbLatency = nowMs() - started;
   const [jobs, storedLogs, auditLog] = await Promise.all([db().ops.listJobs(40), db().ops.listLogs({ limit: 60 }), db().ops.listAudit(40)]);
   const logs = (storedLogs.length ? storedLogs : recentLogs(60)).filter((l) => l.level !== "info").slice(0, 60);
   return (

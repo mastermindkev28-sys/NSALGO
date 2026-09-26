@@ -150,7 +150,7 @@ export interface OpsRepo {
 }
 
 export interface Repositories {
-  kind: "memory" | "postgres";
+  kind: "memory" | "postgres" | "unavailable";
   users: UsersRepo;
   profiles: ProfilesRepo;
   sessions: SessionsRepo;

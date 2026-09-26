@@ -19,20 +19,17 @@ const KINDS: { value: MoverKind; label: string }[] = [
 
 export function MoversTable({ initial, initialKind = "gainers", limit = 10, linkBase = "/symbols" }: { initial: DataResult<MoverRow[]>; initialKind?: MoverKind; limit?: number; linkBase?: string }) {
   const [kind, setKind] = useState<MoverKind>(initialKind);
-  const [data, setData] = useState<DataResult<MoverRow[]> | null>(initial);
+  const [fetched, setFetched] = useState<{ kind: MoverKind; data: DataResult<MoverRow[]> } | null>(null);
+  const data = kind === initialKind ? initial : fetched?.kind === kind ? fetched.data : null;
   useEffect(() => {
-    if (kind === initialKind) {
-      setData(initial);
-      return;
-    }
+    if (kind === initialKind) return;
     const ctrl = new AbortController();
-    setData(null);
     fetch(`/api/market/movers?kind=${kind}&limit=${limit}`, { signal: ctrl.signal })
       .then((r) => r.json() as Promise<DataResult<MoverRow[]>>)
-      .then(setData)
+      .then((d) => setFetched({ kind, data: d }))
       .catch(() => undefined);
     return () => ctrl.abort();
-  }, [kind, initial, initialKind, limit]);
+  }, [kind, initialKind, limit]);
 
   return (
     <div>
