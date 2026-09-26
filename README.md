@@ -83,6 +83,18 @@ Yahoo Finance is intentionally **not** used or scraped. API keys are read server
   - same-origin enforcement on mutations (CSRF)
 - Server actions use Next's built-in origin checks.
 
+## Deploying to Vercel
+
+1. Import the GitHub repository in Vercel. The Next.js preset needs no build overrides.
+2. Set the environment variables:
+   - `DATA_MODE`: `mock` for a demo, `production` with real provider keys.
+   - `SESSION_SECRET`: 32 or more random characters (`openssl rand -base64 48`).
+   - `CRON_SECRET`: random. Vercel sends it to the cron routes automatically.
+   - `NEXT_PUBLIC_SITE_URL` (optional): defaults to the project's production domain.
+3. Deploy.
+
+Without `DATABASE_URL`, mock mode keeps accounts and sessions in server memory. Each serverless instance has its own copy, so data resets on cold starts and a sign-in can occasionally drop. That's fine for a demo. For anything real, add a Postgres `DATABASE_URL` (Supabase works) and run `npm run db:migrate`.
+
 ## Database
 
 ```bash
@@ -109,7 +121,11 @@ These jobs are defined in `services/jobs/index.ts`:
 
 Ways to run them:
 
-- **Vercel cron**: `vercel.json` calls `/api/cron/<job>` with `Authorization: Bearer $CRON_SECRET`.
+- **Vercel cron**: `vercel.json` calls `/api/cron/<job>` with `Authorization: Bearer $CRON_SECRET`. It only schedules jobs that run once a day, because Vercel's Hobby plan rejects anything more frequent. On Vercel Pro, or from any external scheduler, add the intraday jobs as well:
+  - `market-refresh` and `atlas-day`: `*/5 13-21 * * 1-5`
+  - `options-flow-ingest`: `*/2 13-21 * * 1-5`
+  - `news-ingest`: `*/10 * * * *`
+  - `alerts`: `*/5 * * * *`
 - **Manually**: `npm run jobs:run -- atlas-day`.
 
 Each run is recorded and shown in Admin → System.

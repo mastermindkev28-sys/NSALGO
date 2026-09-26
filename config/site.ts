@@ -6,7 +6,10 @@ export const SITE = {
   tagline: "Financial intelligence, organized.",
   description:
     "NSALGO brings market intelligence, AI-driven trade analysis, financial news, options activity and institutional signals into one intelligence platform.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  // Explicit URL first; on Vercel fall back to the project's production domain.
+  url:
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000"),
   twitter: "@nsalgo",
   supportEmail: "support@nsalgo.com",
 };
