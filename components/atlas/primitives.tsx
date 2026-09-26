@@ -47,7 +47,7 @@ export function FactorBars({ components, limit, className, showWeights }: { comp
   return (
     <div className={cn("space-y-1.5", className)}>
       {list.map((c) => (
-        <div key={c.key} className="grid grid-cols-[112px_1fr_34px] items-center gap-2.5 text-[11.5px]" title={c.evidence.join(" ")}>
+        <div key={c.key} className={cn("grid items-center gap-2.5 text-[11.5px]", showWeights ? "grid-cols-[150px_1fr_34px]" : "grid-cols-[112px_1fr_34px]")} title={c.evidence.join(" ")}>
           <span className="truncate text-steel-400">
             {c.label}
             {showWeights && c.weight > 0 ? <span className="ml-1 text-steel-500">{Math.round(c.weight * 100)}%</span> : null}

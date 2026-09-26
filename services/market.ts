@@ -7,9 +7,14 @@ import { load } from "./data";
 
 const QUOTE_TTL = 10_000;
 
-export function getQuotes(symbols: string[]) {
-  const syms = [...new Set(symbols.map((s) => s.toUpperCase()))].sort();
-  return load(`quotes:${syms.join(",")}`, QUOTE_TTL, () => providers().market.getQuotes(syms));
+/** Quotes in the caller's order (the cache key is order-independent). */
+export async function getQuotes(symbols: string[]) {
+  const wanted = [...new Set(symbols.map((s) => s.toUpperCase()))];
+  const syms = [...wanted].sort();
+  const r = await load(`quotes:${syms.join(",")}`, QUOTE_TTL, () => providers().market.getQuotes(syms));
+  if (!r.ok) return r;
+  const rank = new Map(wanted.map((s, i) => [s, i]));
+  return { ...r, data: [...r.data].sort((a, b) => (rank.get(a.symbol) ?? 999) - (rank.get(b.symbol) ?? 999)) };
 }
 
 export async function getQuote(symbol: string) {

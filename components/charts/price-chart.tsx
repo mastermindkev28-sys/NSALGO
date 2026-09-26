@@ -27,14 +27,15 @@ import type { Bar, HistoryInterval, HistoryRange } from "@/types/market";
  * the NSALGO backend datafeed (/api/market/history), never by the charting
  * library itself. Candles, volume, moving averages, VWAP, RSI and MACD.
  */
-const RANGES: { value: HistoryRange; label: string; interval: HistoryInterval }[] = [
-  { value: "1D", label: "1D", interval: "5m" },
-  { value: "5D", label: "5D", interval: "15m" },
-  { value: "1M", label: "1M", interval: "1d" },
-  { value: "3M", label: "3M", interval: "1d" },
-  { value: "6M", label: "6M", interval: "1d" },
-  { value: "1Y", label: "1Y", interval: "1d" },
-  { value: "5Y", label: "5Y", interval: "1w" },
+/** Daily ranges fetch a longer window so moving averages are warmed up, then scroll to the requested span. */
+const RANGES: { value: HistoryRange; label: string; interval: HistoryInterval; fetch: HistoryRange; days?: number }[] = [
+  { value: "1D", label: "1D", interval: "5m", fetch: "1D" },
+  { value: "5D", label: "5D", interval: "15m", fetch: "5D" },
+  { value: "1M", label: "1M", interval: "1d", fetch: "6M", days: 31 },
+  { value: "3M", label: "3M", interval: "1d", fetch: "1Y", days: 92 },
+  { value: "6M", label: "6M", interval: "1d", fetch: "1Y", days: 183 },
+  { value: "1Y", label: "1Y", interval: "1d", fetch: "5Y", days: 366 },
+  { value: "5Y", label: "5Y", interval: "1w", fetch: "5Y" },
 ];
 
 type Indicator = "sma20" | "sma50" | "ema9" | "vwap" | "volume" | "rsi" | "macd";
@@ -75,20 +76,21 @@ export function PriceChart({
   const [hover, setHover] = useState<Bar | null>(null);
   const el = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const interval = RANGES.find((r) => r.value === range)!.interval;
+  const spec = RANGES.find((r) => r.value === range)!;
+  const interval = spec.interval;
   const intraday = interval.endsWith("m") || interval === "1h";
 
   useEffect(() => {
     const ctrl = new AbortController();
     setResult(null);
-    fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}&range=${range}&interval=${interval}`, { signal: ctrl.signal })
+    fetch(`/api/market/history?symbol=${encodeURIComponent(symbol)}&range=${spec.fetch}&interval=${interval}`, { signal: ctrl.signal })
       .then((r) => r.json() as Promise<DataResult<Bar[]>>)
       .then(setResult)
       .catch((e) => {
         if ((e as Error).name !== "AbortError") setResult({ ok: false, error: { code: "PROVIDER_UNAVAILABLE", message: "Chart data temporarily unavailable." } });
       });
     return () => ctrl.abort();
-  }, [symbol, range, interval]);
+  }, [symbol, spec.fetch, interval]);
 
   const bars = useMemo(() => (result?.ok ? result.data : []), [result]);
 
@@ -176,14 +178,19 @@ export function PriceChart({
         title: lv.label,
       });
     }
-    chart.timeScale().fitContent();
+    if (spec.days && bars.length) {
+      const lastT = bars[bars.length - 1]!.time;
+      const from = lastT - spec.days * 86_400;
+      const firstIdx = Math.max(0, bars.findIndex((b) => b.time >= from));
+      chart.timeScale().setVisibleLogicalRange({ from: firstIdx, to: bars.length + 2 });
+    } else chart.timeScale().fitContent();
     const byTime = new Map(bars.map((b) => [b.time, b]));
     chart.subscribeCrosshairMove((p) => setHover(p.time ? (byTime.get(p.time as number) ?? null) : null));
     return () => {
       chart.remove();
       chartRef.current = null;
     };
-  }, [bars, ind, intraday, compact, levels]);
+  }, [bars, ind, intraday, compact, levels, spec.days]);
 
   const last = hover ?? bars[bars.length - 1] ?? null;
   const prev = last ? bars[bars.indexOf(last) - 1] : undefined;
