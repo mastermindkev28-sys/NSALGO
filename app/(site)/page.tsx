@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AtlasSetupCard } from "@/components/atlas/setup-card";
 import { CompassField } from "@/components/brand/compass-field";
+import { EmblemHero } from "@/components/brand/logo";
 import { CongressTable, FlowTable, InsiderTable, InstitutionalTable } from "@/components/disclosures/tables";
 import { LiveQuoteGrid } from "@/components/market/live-quote-grid";
 import { HeroTerminal } from "@/components/marketing/hero-terminal";
@@ -87,6 +88,7 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute left-[10%] top-0 h-[420px] w-[620px] rounded-full bg-polar-500/[0.06] blur-3xl" aria-hidden />
         <Container className="relative grid items-center gap-12 pb-16 pt-14 sm:pt-20 lg:grid-cols-[1fr_1.12fr] lg:gap-14 lg:pb-24">
           <div className="animate-fade-up">
+            <EmblemHero size={72} priority className="-ml-2 mb-5" />
             <div className="eyebrow mb-5 flex items-center gap-2">
               <span className="h-px w-6 bg-steel-500" aria-hidden />
               {content.heroEyebrow}
@@ -320,6 +322,7 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-[1400px] overflow-hidden rounded-lg border border-line-strong bg-[radial-gradient(ellipse_at_top,#5d8ef51a,transparent_60%),linear-gradient(180deg,#121419,#0a0b0e)] px-6 py-16 text-center sm:py-20">
           <CompassField className="pointer-events-none absolute left-1/2 top-0 h-[900px] w-[900px] -translate-x-1/2 -translate-y-1/3 opacity-60" />
           <div className="relative">
+            <EmblemHero size={132} reflection className="mb-4" />
             <h2 className="chrome-text mx-auto max-w-3xl text-[30px] font-semibold uppercase leading-[1.02] tracking-[-0.025em] sm:text-[48px]">Markets move quickly. Your intelligence should too.</h2>
             <p className="mx-auto mt-5 max-w-xl text-[15px] text-steel-400">ATLAS, options intelligence, the news terminal, whale activity and public disclosures — in one membership.</p>
             <div className="mt-9 flex flex-wrap justify-center gap-3">

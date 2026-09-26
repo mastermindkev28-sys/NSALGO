@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { Logo } from "@/components/brand/logo";
+import { Emblem, Logo } from "@/components/brand/logo";
 import { CompassField } from "@/components/brand/compass-field";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-void">
       <CompassField className="pointer-events-none absolute left-1/2 top-1/2 h-[1300px] w-[1300px] -translate-x-1/2 -translate-y-1/2 opacity-60" />
+      <Emblem size={760} className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.05]" />
       <header className="relative flex h-16 items-center justify-between px-6">
         <Link href="/" aria-label="NSALGO home">
-          <Logo />
+          <Logo priority />
         </Link>
         <Link href="/" className="text-[12.5px] text-steel-400 hover:text-chrome">
           Back to site

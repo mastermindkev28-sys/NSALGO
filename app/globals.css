@@ -165,8 +165,9 @@
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     border: 1px solid var(--color-line-strong);
   }
+  /* Polished chrome, after the logo: bright crown, dark horizon band, lit lower edge. */
   .chrome-text {
-    background: linear-gradient(180deg, #ffffff 0%, #e9edf3 40%, #9aa3b0 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #eef1f5 34%, #a9b1bc 50%, #7d8693 54%, #d3d8df 72%, #b4bbc5 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

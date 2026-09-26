@@ -1,41 +1,57 @@
-import { useId } from "react";
+import Image from "next/image";
+import emblemSrc from "@/assets/brand/emblem.png";
+import lockupSrc from "@/assets/brand/lockup.png";
+import wordmarkSrc from "@/assets/brand/wordmark.png";
 import { cn } from "@/lib/utils";
 
 /**
- * NSALGO north-star mark: a four-point compass star with an elongated
- * northern ray, set in chrome. Precision, direction, navigation.
+ * NSALGO brand marks. Masters live in assets/brand/source; the web files are
+ * derived by scripts/brand-assets.mjs (chrome on transparent, for dark surfaces).
+ * See docs/brand.md before changing anything here.
  */
-export function StarMark({ className, size = 22 }: { className?: string; size?: number }) {
-  // Unique per instance: a shared id breaks the fill when the first instance is hidden (display:none).
-  const gid = `ns-chrome-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" className={cn("shrink-0", className)} aria-hidden>
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="0.55" stopColor="#dfe4eb" />
-          <stop offset="1" stopColor="#8e98a6" />
-        </linearGradient>
-      </defs>
-      <circle cx="16" cy="17.5" r="11" fill="none" stroke="#ffffff" strokeOpacity="0.14" strokeWidth="0.75" />
-      {/* diagonal hairline rays */}
-      <path d="M9.6 11.1 16 17.5 22.4 11.1M9.6 23.9 16 17.5 22.4 23.9" stroke="#ffffff" strokeOpacity="0.28" strokeWidth="0.6" fill="none" />
-      {/* primary star: long north ray */}
-      <path d="M16 1.5 17.55 15.95 26.5 17.5 17.55 19.05 16 28.5 14.45 19.05 5.5 17.5 14.45 15.95Z" fill={`url(#${gid})`} />
-      <circle cx="16" cy="17.5" r="1.05" fill="#07080a" />
-    </svg>
-  );
+
+/** The chrome north-star emblem (compass star with the S-twist and bezel ring). */
+export function Emblem({ size = 28, className, priority }: { size?: number; className?: string; priority?: boolean }) {
+  return <Image src={emblemSrc} alt="" aria-hidden width={size} height={size} priority={priority} className={cn("shrink-0 select-none", className)} draggable={false} />;
 }
 
-export function Logo({ className, compact = false }: { className?: string; compact?: boolean }) {
+/** "NS ALGO" chrome wordmark. */
+export function Wordmark({ height = 15, className, priority }: { height?: number; className?: string; priority?: boolean }) {
+  const width = Math.round((wordmarkSrc.width / wordmarkSrc.height) * height);
+  return <Image src={wordmarkSrc} alt="NSALGO" width={width} height={height} priority={priority} className={cn("select-none", className)} draggable={false} />;
+}
+
+/** Emblem stacked over the wordmark — for hero moments, auth and brand panels. */
+export function Lockup({ width = 220, className, priority }: { width?: number; className?: string; priority?: boolean }) {
+  const height = Math.round((lockupSrc.height / lockupSrc.width) * width);
+  return <Image src={lockupSrc} alt="NSALGO" width={width} height={height} priority={priority} className={cn("select-none", className)} draggable={false} />;
+}
+
+/** Horizontal logo used in navigation: emblem + wordmark (or the emblem alone when compact). */
+export function Logo({ className, compact = false, priority }: { className?: string; compact?: boolean; priority?: boolean }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <StarMark />
-      {!compact ? <span className="chrome-text text-[14.5px] font-semibold tracking-[0.34em]">NSALGO</span> : null}
+      <Emblem size={30} priority={priority} />
+      {!compact ? <Wordmark height={14} priority={priority} /> : null}
     </span>
   );
 }
 
 export function AtlasWordmark({ className }: { className?: string }) {
   return <span className={cn("font-mono text-[11px] font-medium tracking-[0.42em] text-steel-200", className)}>ATLAS</span>;
+}
+
+/** Emblem with the brand's cold-blue glint and an optional floor reflection (after the master lockup). */
+export function EmblemHero({ size = 160, reflection = false, className, priority }: { size?: number; reflection?: boolean; className?: string; priority?: boolean }) {
+  return (
+    <div className={cn("pointer-events-none relative inline-flex flex-col items-center", className)} aria-hidden>
+      <span className="absolute left-1/2 top-1/2 size-[140%] -translate-x-1/2 -translate-y-[62%] rounded-full bg-[radial-gradient(circle,#5d8ef52e,transparent_60%)] blur-2xl" />
+      <Emblem size={size} priority={priority} className="relative drop-shadow-[0_0_28px_#aecaff2e]" />
+      {reflection ? (
+        <div className="relative -mt-1 overflow-hidden" style={{ height: Math.round(size * 0.38) }}>
+          <Emblem size={size} className="-scale-y-100 opacity-20 [mask-image:linear-gradient(to_top,black,transparent_40%)]" />
+        </div>
+      ) : null}
+    </div>
+  );
 }

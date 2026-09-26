@@ -29,7 +29,7 @@ export function TopNav({ signedIn, paid }: { signedIn: boolean; paid: boolean })
     <header className={cn("sticky top-0 z-40 transition-colors duration-300", scrolled || open ? "glass border-x-0 border-t-0" : "border-b border-transparent")}>
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-6 px-4 sm:px-6">
         <Link href="/" className="shrink-0" aria-label="NSALGO home">
-          <Logo />
+          <Logo priority />
         </Link>
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
           {PUBLIC_NAV.map((n) => {
