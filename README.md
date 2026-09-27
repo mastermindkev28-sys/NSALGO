@@ -49,12 +49,26 @@ The provider interfaces live in `providers/types.ts`: `MarketDataProvider`, `Opt
 
 Included adapters:
 
-- **Polygon**: market data, options chains and news. Options flow returns `UNSUPPORTED` until a licensed trade-level feed is configured.
+- **Polygon**: market data, options chains, news and options flow. Flow needs a Polygon options plan that includes trades; see below.
 - **SEC EDGAR**: Form 4 XML and 13F. Requests use a declared User-Agent and are throttled to respect SEC fair-access limits.
 - **Congressional**: a disclosure-aggregator adapter.
 - **TradingEconomics**: the economic calendar.
 
 Yahoo Finance is intentionally **not** used or scraped. API keys are read server-side only.
+
+### Options flow
+
+`PolygonOptionsProvider.getFlow` scans the most active contracts (by premium traded today) for each underlying in `OPTIONS_FLOW_SYMBOLS` (or a built-in liquid list), pulls their trades, and turns them into large prints. Polygon doesn't label flow, so `providers/polygon/flow.ts` classifies it with documented heuristics:
+
+- **Execution:** legs within 50 ms on 2+ exchanges are a sweep, on one exchange a split; a single print of 250+ contracts is a block.
+- **Side and sentiment:** the order's price against the NBBO just before it (bought at the ask on a call is bullish, and so on). Needs quotes on your plan; without them side and sentiment are shown as unknown.
+- **Intent:** an order larger than open interest is marked opening. Otherwise it's unknown.
+
+Without a trades entitlement the flow pages show "not configured".
+
+### Live quotes
+
+Quote widgets (ticker tape, market pulse, dashboard indices, watchlists) subscribe to `/api/market/stream`, a Server-Sent Events route that refreshes every `QUOTE_STREAM_INTERVAL_MS` and sends only quotes that changed. Each connection lasts 50 seconds and the browser reconnects automatically; streams pause while the tab is hidden. If streaming fails the widgets fall back to polling `/api/market/quote`. API keys never reach the browser. Prices are only as fresh as your plan: with `MARKET_DATA_DELAY_MINUTES=15` they tick, but 15 minutes behind.
 
 ## ATLAS engine (`services/atlas/`)
 

@@ -20,7 +20,7 @@ export default async function FlowPage() {
       <MemberPageHeader
         eyebrow="Options intelligence"
         title="Options flow"
-        description="Large options activity for the session. Sweep/block, side and opening/closing status appear only where the provider classifies them — otherwise shown as unavailable."
+        description="Large options activity for the session. Sweep, block, side and opening status are derived from trade and quote data; anything that can't be determined is shown as unavailable."
         actions={<DataSourceBadge meta={flow.ok ? flow.meta : null} />}
       />
       <MemberBody>{flow.ok ? <FlowExplorer prints={flow.data} maxHeight={640} /> : <Panel><UnavailableState error={flow.error} label="Options flow" /></Panel>}</MemberBody>

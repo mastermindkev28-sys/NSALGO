@@ -37,7 +37,7 @@ function buildProduction(): ProviderRegistry {
   const optionsKey = e.OPTIONS_API_KEY ?? e.MARKET_DATA_API_KEY;
   const options =
     e.OPTIONS_DATA_PROVIDER === "polygon" && optionsKey
-      ? new PolygonOptionsProvider(optionsKey, e.MARKET_DATA_DELAY_MINUTES)
+      ? new PolygonOptionsProvider(optionsKey, e.MARKET_DATA_DELAY_MINUTES, flowSymbols(e.OPTIONS_FLOW_SYMBOLS))
       : unavailableProvider("Options data", "OPTIONS_API_KEY");
   const newsKey = e.NEWS_API_KEY ?? (e.NEWS_PROVIDER === "polygon" ? e.MARKET_DATA_API_KEY : undefined);
   const news = e.NEWS_PROVIDER === "polygon" && newsKey ? new PolygonNewsProvider(newsKey) : unavailableProvider("News", "NEWS_API_KEY");
@@ -52,6 +52,14 @@ function buildProduction(): ProviderRegistry {
       ? new TradingEconomicsCalendarProvider(e.ECONOMIC_CALENDAR_API_KEY)
       : unavailableProvider("Economic calendar", "ECONOMIC_CALENDAR_API_KEY");
   return { market, options, news, insiders, institutional, congress, calendar };
+}
+
+function flowSymbols(raw: string | undefined): string[] | undefined {
+  const list = raw
+    ?.split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter((s) => /^[A-Z.]{1,8}$/.test(s));
+  return list?.length ? list : undefined;
 }
 
 function buildMock(): ProviderRegistry {

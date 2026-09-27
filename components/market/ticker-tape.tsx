@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { Change } from "@/components/ui/change";
-import { usePoll } from "@/hooks/use-poll";
+import { useLiveQuotes } from "@/hooks/use-live-quotes";
 import { fmtQuote } from "@/lib/format";
 import type { DataResult } from "@/types/data";
 import type { Quote } from "@/types/market";
 
 /** Continuous tape of benchmark quotes. Pauses on hover; honours reduced motion. */
 export function TickerTape({ initial, symbols }: { initial: DataResult<Quote[]>; symbols: string[] }) {
-  const { data } = usePoll<DataResult<Quote[]>>(`/api/market/quote?symbols=${symbols.join(",")}`, 15_000, initial);
+  const { data } = useLiveQuotes(symbols, initial);
   if (!data.ok || !data.data.length) return <div className="h-9 border-b border-line" />;
   const items = [...data.data, ...data.data];
   return (

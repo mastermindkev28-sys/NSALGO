@@ -11,7 +11,7 @@ import { Change } from "@/components/ui/change";
 import { Input, Modal } from "@/components/ui/controls";
 import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/states";
-import { usePoll } from "@/hooks/use-poll";
+import { useLiveQuotes } from "@/hooks/use-live-quotes";
 import { fmtCompact, fmtPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { DataResult } from "@/types/data";
@@ -37,7 +37,7 @@ export function WatchlistManager({ initial }: { initial: Watchlist[] }) {
   const [chart, setChart] = useState<string | null>(null);
   const active = lists.find((l) => l.id === activeId) ?? null;
   const symbols = active?.items.map((i) => i.symbol) ?? [];
-  const { data: quotes } = usePoll<DataResult<Quote[]> | null>(symbols.length ? `/api/market/quote?symbols=${symbols.join(",")}` : null, 15_000, null);
+  const { data: quotes } = useLiveQuotes<DataResult<Quote[]> | null>(symbols, null);
   const [firstQuotes, setFirstQuotes] = useState<Record<string, Quote>>({});
   const qmap = new Map<string, Quote>(Object.entries(firstQuotes));
   if (quotes?.ok) for (const q of quotes.data) qmap.set(q.symbol, q);
