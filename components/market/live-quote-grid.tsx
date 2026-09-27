@@ -1,6 +1,6 @@
 "use client";
 
-import { usePoll } from "@/hooks/use-poll";
+import { useLiveQuotes } from "@/hooks/use-live-quotes";
 import { cn } from "@/lib/utils";
 import type { DataResult } from "@/types/data";
 import type { Quote } from "@/types/market";
@@ -25,7 +25,7 @@ export function LiveQuoteGrid({
   interval?: number;
   showVolume?: boolean;
 }) {
-  const { data } = usePoll<DataResult<Quote[]>>(`/api/market/quote?symbols=${symbols.join(",")}`, interval, initial);
+  const { data } = useLiveQuotes(symbols, initial, interval);
   if (!data.ok) return <UnavailableState error={data.error} label="Quotes" className="panel" />;
   const bySym = new Map(data.data.map((q) => [q.symbol, q]));
   return (

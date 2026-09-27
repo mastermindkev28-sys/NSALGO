@@ -17,6 +17,16 @@ export async function getQuotes(symbols: string[]) {
   return { ...r, data: [...r.data].sort((a, b) => (rank.get(a.symbol) ?? 999) - (rank.get(b.symbol) ?? 999)) };
 }
 
+/**
+ * Quotes for the live stream. A short TTL shared by every open stream means
+ * each distinct symbol set costs one upstream call per interval, however many
+ * viewers are connected to this instance.
+ */
+export async function getStreamQuotes(symbols: string[], ttlMs: number) {
+  const syms = [...new Set(symbols.map((s) => s.toUpperCase()))].sort();
+  return load(`quotes-live:${syms.join(",")}`, ttlMs, () => providers().market.getQuotes(syms));
+}
+
 export async function getQuote(symbol: string) {
   const r = await getQuotes([symbol]);
   if (!r.ok) return r;

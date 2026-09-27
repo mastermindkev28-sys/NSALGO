@@ -29,6 +29,10 @@ const EnvSchema = z.object({
   OPTIONS_DATA_PROVIDER: z.string().default("polygon"),
   OPTIONS_API_KEY: optional,
   MARKET_DATA_DELAY_MINUTES: z.coerce.number().int().min(0).default(15),
+  /** Comma-separated underlyings scanned for options flow. Empty = built-in liquid list. */
+  OPTIONS_FLOW_SYMBOLS: optional,
+  /** How often the live quote stream refreshes, in milliseconds. */
+  QUOTE_STREAM_INTERVAL_MS: z.coerce.number().int().min(500).max(60_000).default(2000),
 
   NEWS_PROVIDER: z.string().default("polygon"),
   NEWS_API_KEY: optional,

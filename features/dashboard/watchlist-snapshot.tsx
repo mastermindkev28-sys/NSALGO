@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { Change } from "@/components/ui/change";
 import { Sparkline } from "@/components/ui/sparkline";
-import { usePoll } from "@/hooks/use-poll";
+import { useLiveQuotes } from "@/hooks/use-live-quotes";
 import { fmtPrice } from "@/lib/format";
 import type { DataResult } from "@/types/data";
 import type { Quote } from "@/types/market";
 
 export function WatchlistSnapshot({ symbols, initial, sparks }: { symbols: string[]; initial: DataResult<Quote[]>; sparks: Record<string, number[]> }) {
-  const { data } = usePoll<DataResult<Quote[]>>(symbols.length ? `/api/market/quote?symbols=${symbols.join(",")}` : null, 20_000, initial);
+  const { data } = useLiveQuotes(symbols, initial, 20_000);
   if (!symbols.length) return <p className="px-4 py-6 text-[12.5px] text-steel-500">Add symbols to a watchlist to see them here.</p>;
   if (!data.ok) return <p className="px-4 py-6 text-[12.5px] text-steel-500">Quotes unavailable.</p>;
   return (
