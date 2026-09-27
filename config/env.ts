@@ -26,7 +26,8 @@ const EnvSchema = z.object({
 
   MARKET_DATA_PROVIDER: z.string().default("polygon"),
   MARKET_DATA_API_KEY: optional,
-  OPTIONS_DATA_PROVIDER: z.string().default("polygon"),
+  /** polygon | unusualwhales. Empty = unusualwhales when UNUSUAL_WHALES_API_KEY is set, else polygon. */
+  OPTIONS_DATA_PROVIDER: optional,
   OPTIONS_API_KEY: optional,
   MARKET_DATA_DELAY_MINUTES: z.coerce.number().int().min(0).default(15),
   /** Comma-separated underlyings scanned for options flow. Empty = built-in liquid list. */
@@ -34,15 +35,23 @@ const EnvSchema = z.object({
   /** How often the live quote stream refreshes, in milliseconds. */
   QUOTE_STREAM_INTERVAL_MS: z.coerce.number().int().min(500).max(60_000).default(2000),
 
+  /** Unusual Whales API token: options chains and flow, congress, insiders, calendars. */
+  UNUSUAL_WHALES_API_KEY: optional,
+
   NEWS_PROVIDER: z.string().default("polygon"),
   NEWS_API_KEY: optional,
 
   SEC_API_CONFIG: optional,
+  /** sec | unusualwhales. Empty = unusualwhales when UNUSUAL_WHALES_API_KEY is set, else sec. */
+  INSIDER_PROVIDER: optional,
 
+  /** vendor | unusualwhales. Empty = unusualwhales when UNUSUAL_WHALES_API_KEY is set, else vendor. */
+  CONGRESS_PROVIDER: optional,
   CONGRESS_API_BASE_URL: optional,
   CONGRESS_API_KEY: optional,
 
-  ECONOMIC_CALENDAR_PROVIDER: z.string().default("tradingeconomics"),
+  /** tradingeconomics | unusualwhales. Empty = unusualwhales when UNUSUAL_WHALES_API_KEY is set, else tradingeconomics. */
+  ECONOMIC_CALENDAR_PROVIDER: optional,
   ECONOMIC_CALENDAR_API_KEY: optional,
 
   AI_PROVIDER: z.string().default("anthropic"),

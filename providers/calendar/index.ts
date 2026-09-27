@@ -19,7 +19,7 @@ interface TeRow {
   Importance: number;
 }
 
-function category(c: string): EconomicEvent["category"] {
+export function category(c: string): EconomicEvent["category"] {
   const s = c.toLowerCase();
   if (/inflation|cpi|pce|price/.test(s)) return "inflation";
   if (/payroll|employment|jobless|unemployment|job/.test(s)) return "employment";
