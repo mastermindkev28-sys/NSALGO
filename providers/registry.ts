@@ -23,6 +23,13 @@ import { MockNewsProvider } from "./mock/news";
 import { MockOptionsDataProvider } from "./mock/options";
 import { PolygonMarketDataProvider, PolygonNewsProvider, PolygonOptionsProvider } from "./polygon";
 import { Sec13fProvider, SecInsiderProvider } from "./sec";
+import {
+  UnusualWhalesCalendarProvider,
+  UnusualWhalesClient,
+  UnusualWhalesCongressProvider,
+  UnusualWhalesInsiderProvider,
+  UnusualWhalesOptionsProvider,
+} from "./unusualwhales";
 import type { ProviderRegistry } from "./types";
 import { unavailableProvider } from "./unavailable";
 
@@ -34,23 +41,45 @@ function buildProduction(): ProviderRegistry {
     e.MARKET_DATA_PROVIDER === "polygon" && e.MARKET_DATA_API_KEY
       ? new PolygonMarketDataProvider(e.MARKET_DATA_API_KEY, e.MARKET_DATA_DELAY_MINUTES)
       : unavailableProvider("Market data", "MARKET_DATA_API_KEY");
+  const uw = e.UNUSUAL_WHALES_API_KEY ? new UnusualWhalesClient(e.UNUSUAL_WHALES_API_KEY) : undefined;
+  // An explicit *_PROVIDER wins; otherwise Unusual Whales takes the slot when its key is set.
+  const pick = (explicit: string | undefined, fallback: string) => explicit ?? (uw ? "unusualwhales" : fallback);
+
   const optionsKey = e.OPTIONS_API_KEY ?? e.MARKET_DATA_API_KEY;
+  const optionsVendor = pick(e.OPTIONS_DATA_PROVIDER, "polygon");
   const options =
-    e.OPTIONS_DATA_PROVIDER === "polygon" && optionsKey
-      ? new PolygonOptionsProvider(optionsKey, e.MARKET_DATA_DELAY_MINUTES, flowSymbols(e.OPTIONS_FLOW_SYMBOLS))
-      : unavailableProvider("Options data", "OPTIONS_API_KEY");
+    optionsVendor === "unusualwhales" && uw
+      ? new UnusualWhalesOptionsProvider(uw)
+      : optionsVendor === "polygon" && optionsKey
+        ? new PolygonOptionsProvider(optionsKey, e.MARKET_DATA_DELAY_MINUTES, flowSymbols(e.OPTIONS_FLOW_SYMBOLS))
+        : unavailableProvider("Options data", optionsVendor === "unusualwhales" ? "UNUSUAL_WHALES_API_KEY" : "OPTIONS_API_KEY");
   const newsKey = e.NEWS_API_KEY ?? (e.NEWS_PROVIDER === "polygon" ? e.MARKET_DATA_API_KEY : undefined);
   const news = e.NEWS_PROVIDER === "polygon" && newsKey ? new PolygonNewsProvider(newsKey) : unavailableProvider("News", "NEWS_API_KEY");
-  const insiders = e.sec ? new SecInsiderProvider(e.sec) : unavailableProvider("SEC insider", "SEC_API_CONFIG");
+  const insiderVendor = pick(e.INSIDER_PROVIDER, "sec");
+  const insiders =
+    insiderVendor === "unusualwhales" && uw
+      ? new UnusualWhalesInsiderProvider(uw)
+      : insiderVendor === "sec" && e.sec
+        ? new SecInsiderProvider(e.sec)
+        : unavailableProvider("SEC insider", insiderVendor === "unusualwhales" ? "UNUSUAL_WHALES_API_KEY" : "SEC_API_CONFIG");
   const institutional = e.sec ? new Sec13fProvider(e.sec) : unavailableProvider("Institutional", "SEC_API_CONFIG");
+  const congressVendor = pick(e.CONGRESS_PROVIDER, "vendor");
   const congress =
-    e.CONGRESS_API_BASE_URL && e.CONGRESS_API_KEY
-      ? new VendorCongressProvider(e.CONGRESS_API_BASE_URL, e.CONGRESS_API_KEY)
-      : unavailableProvider("Congressional disclosures", "CONGRESS_API_BASE_URL and CONGRESS_API_KEY");
+    congressVendor === "unusualwhales" && uw
+      ? new UnusualWhalesCongressProvider(uw)
+      : congressVendor === "vendor" && e.CONGRESS_API_BASE_URL && e.CONGRESS_API_KEY
+        ? new VendorCongressProvider(e.CONGRESS_API_BASE_URL, e.CONGRESS_API_KEY)
+        : unavailableProvider(
+            "Congressional disclosures",
+            congressVendor === "unusualwhales" ? "UNUSUAL_WHALES_API_KEY" : "CONGRESS_API_BASE_URL and CONGRESS_API_KEY",
+          );
+  const calendarVendor = pick(e.ECONOMIC_CALENDAR_PROVIDER, "tradingeconomics");
   const calendar =
-    e.ECONOMIC_CALENDAR_PROVIDER === "tradingeconomics" && e.ECONOMIC_CALENDAR_API_KEY
-      ? new TradingEconomicsCalendarProvider(e.ECONOMIC_CALENDAR_API_KEY)
-      : unavailableProvider("Economic calendar", "ECONOMIC_CALENDAR_API_KEY");
+    calendarVendor === "unusualwhales" && uw
+      ? new UnusualWhalesCalendarProvider(uw)
+      : calendarVendor === "tradingeconomics" && e.ECONOMIC_CALENDAR_API_KEY
+        ? new TradingEconomicsCalendarProvider(e.ECONOMIC_CALENDAR_API_KEY)
+        : unavailableProvider("Economic calendar", calendarVendor === "unusualwhales" ? "UNUSUAL_WHALES_API_KEY" : "ECONOMIC_CALENDAR_API_KEY");
   return { market, options, news, insiders, institutional, congress, calendar };
 }
 

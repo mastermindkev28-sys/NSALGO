@@ -53,12 +53,15 @@ Included adapters:
 - **SEC EDGAR**: Form 4 XML and 13F. Requests use a declared User-Agent and are throttled to respect SEC fair-access limits.
 - **Congressional**: a disclosure-aggregator adapter.
 - **TradingEconomics**: the economic calendar.
+- **Unusual Whales**: options chains and flow alerts, congressional trades, insider transactions, and the economic and earnings calendars, all from one `UNUSUAL_WHALES_API_KEY`. While the key is set, each of those slots uses Unusual Whales unless its `*_PROVIDER` variable names another vendor. Market data, news and 13F stay on their own providers.
 
 Yahoo Finance is intentionally **not** used or scraped. API keys are read server-side only.
 
 ### Options flow
 
-`PolygonOptionsProvider.getFlow` scans the most active contracts (by premium traded today) for each underlying in `OPTIONS_FLOW_SYMBOLS` (or a built-in liquid list), pulls their trades, and turns them into large prints. Polygon doesn't label flow, so `providers/polygon/flow.ts` classifies it with documented heuristics:
+With Unusual Whales, flow is its flow-alerts feed (`providers/unusualwhales`). Sweeps are flagged by Unusual Whales. Side is where 60% or more of the premium traded (ask or bid, otherwise mid), and sentiment follows from side and call/put. Alerts made only of opening trades are marked opening.
+
+Without it, `PolygonOptionsProvider.getFlow` scans the most active contracts (by premium traded today) for each underlying in `OPTIONS_FLOW_SYMBOLS` (or a built-in liquid list), pulls their trades, and turns them into large prints. Polygon doesn't label flow, so `providers/polygon/flow.ts` classifies it with documented heuristics:
 
 - **Execution:** legs within 50 ms on 2+ exchanges are a sweep, on one exchange a split; a single print of 250+ contracts is a block.
 - **Side and sentiment:** the order's price against the NBBO just before it (bought at the ask on a call is bullish, and so on). Needs quotes on your plan; without them side and sentiment are shown as unknown.

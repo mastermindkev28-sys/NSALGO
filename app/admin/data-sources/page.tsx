@@ -14,12 +14,12 @@ export const metadata: Metadata = { title: "Data Sources" };
 
 const SLOTS = [
   { slot: "market", name: "Market data", iface: "MarketDataProvider", env: ["MARKET_DATA_PROVIDER", "MARKET_DATA_API_KEY", "MARKET_DATA_DELAY_MINUTES"], note: "Quotes, history, status, movers, sectors, breadth." },
-  { slot: "options", name: "Options data", iface: "OptionsDataProvider", env: ["OPTIONS_DATA_PROVIDER", "OPTIONS_API_KEY"], note: "Chains, greeks, OI. Classified flow requires a flow-licensed vendor." },
+  { slot: "options", name: "Options data", iface: "OptionsDataProvider", env: ["OPTIONS_DATA_PROVIDER", "OPTIONS_API_KEY", "UNUSUAL_WHALES_API_KEY"], note: "Chains, greeks, OI. Classified flow requires a flow-licensed vendor (Unusual Whales or Polygon trades)." },
   { slot: "news", name: "News", iface: "NewsProvider", env: ["NEWS_PROVIDER", "NEWS_API_KEY"], note: "Licensed feed; only headline, summary, link and image URL are stored." },
-  { slot: "insiders", name: "Insider filings", iface: "InsiderDataProvider", env: ["SEC_API_CONFIG"], note: "SEC EDGAR Forms 3/4/5; fair-access User-Agent and throttling." },
+  { slot: "insiders", name: "Insider filings", iface: "InsiderDataProvider", env: ["INSIDER_PROVIDER", "SEC_API_CONFIG", "UNUSUAL_WHALES_API_KEY"], note: "Forms 3/4/5 from SEC EDGAR (fair-access throttled) or Unusual Whales." },
   { slot: "institutional", name: "Institutional / 13F", iface: "InstitutionalDataProvider", env: ["SEC_API_CONFIG"], note: "13F-HR filings for tracked filer CIKs." },
-  { slot: "congress", name: "Congressional disclosures", iface: "CongressionalDisclosureProvider", env: ["CONGRESS_API_BASE_URL", "CONGRESS_API_KEY"], note: "Licensed aggregator of House/Senate PTRs." },
-  { slot: "calendar", name: "Economic calendar", iface: "EconomicCalendarProvider", env: ["ECONOMIC_CALENDAR_PROVIDER", "ECONOMIC_CALENDAR_API_KEY"], note: "Forecast/actual shown only when published by the source." },
+  { slot: "congress", name: "Congressional disclosures", iface: "CongressionalDisclosureProvider", env: ["CONGRESS_PROVIDER", "CONGRESS_API_BASE_URL", "CONGRESS_API_KEY", "UNUSUAL_WHALES_API_KEY"], note: "Licensed aggregator of House/Senate PTRs, or Unusual Whales." },
+  { slot: "calendar", name: "Economic calendar", iface: "EconomicCalendarProvider", env: ["ECONOMIC_CALENDAR_PROVIDER", "ECONOMIC_CALENDAR_API_KEY", "UNUSUAL_WHALES_API_KEY"], note: "Forecast/actual shown only when published by the source." },
 ] as const;
 
 async function withTimeout(p: Promise<ProviderHealth>, ms = 6000): Promise<ProviderHealth> {
