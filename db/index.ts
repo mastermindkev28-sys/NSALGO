@@ -15,6 +15,12 @@ let repos: Repositories | undefined;
 export function db(): Repositories {
   if (repos) return repos;
   const url = process.env.DATABASE_URL?.trim();
+  if (url && !URL.canParse(url)) {
+    // A placeholder or malformed value would otherwise throw on every query.
+    console.error("[db] DATABASE_URL is not a valid connection URL — running with the database unavailable.");
+    repos = unavailableRepositories();
+    return repos;
+  }
   if (url) {
     repos = postgresRepositories(url);
   } else {
