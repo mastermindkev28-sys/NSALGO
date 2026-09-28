@@ -4,18 +4,19 @@ import { memoryRepositories } from "./memory";
 import { postgresRepositories } from "./postgres";
 import type { Repositories } from "./types";
 import { unavailableRepositories } from "./unavailable";
+import { databaseUrl, databaseUrlMalformed } from "./url";
 
 let repos: Repositories | undefined;
 
 /**
- * Repository factory. DATABASE_URL → PostgreSQL; otherwise the in-memory store
+ * Repository factory. DATABASE_URL (or POSTGRES_URL) → PostgreSQL; otherwise the in-memory store
  * (refused in production so a misconfigured deploy can't silently lose data —
  * public pages degrade, writes fail loudly and /api/health reports 503).
  */
 export function db(): Repositories {
   if (repos) return repos;
-  const url = process.env.DATABASE_URL?.trim();
-  if (url && !URL.canParse(url)) {
+  const url = databaseUrl();
+  if (databaseUrlMalformed()) {
     // A placeholder or malformed value would otherwise throw on every query.
     console.error("[db] DATABASE_URL is not a valid connection URL — running with the database unavailable.");
     repos = unavailableRepositories();

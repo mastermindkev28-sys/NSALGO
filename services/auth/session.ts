@@ -16,6 +16,10 @@ export const SESSION_COOKIE = isProd ? "__Host-nsalgo_session" : "nsalgo_session
 function secret(): string {
   const s = process.env.SESSION_SECRET;
   if (s && s.length >= 32) return s;
+  // Set by the Vercel Supabase integration. Derive a separate key rather than
+  // using the JWT signing secret directly.
+  const jwt = process.env.SUPABASE_JWT_SECRET;
+  if (jwt && jwt.length >= 32) return createHmac("sha256", jwt).update("nsalgo-session-v1").digest("base64url");
   if (isProd && process.env.DATA_MODE === "production") throw new Error("SESSION_SECRET (32+ chars) is required in production.");
   return "dev-only-session-secret-change-me-0123456789";
 }
