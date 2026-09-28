@@ -1,14 +1,34 @@
 #!/usr/bin/env node
 /**
- * Applies SQL migrations in db/migrations (lexical order) to DATABASE_URL.
+ * Applies SQL migrations in db/migrations (lexical order) to DATABASE_URL, or
+ * POSTGRES_URL when DATABASE_URL is unset or malformed (see db/url.ts).
  * Tracks applied files in schema_migrations. Usage: DATABASE_URL=... npm run db:migrate
+ *
+ * With --if-configured (used by the Vercel build) a missing URL is a no-op
+ * instead of an error, so deploys without a database still build.
  */
 import fs from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 
-const url = process.env.DATABASE_URL;
+function databaseUrl() {
+  for (const raw of [process.env.DATABASE_URL, process.env.POSTGRES_URL]) {
+    const url = raw?.trim();
+    if (url && URL.canParse(url)) {
+      const u = new URL(url);
+      u.searchParams.delete("supa");
+      return u.toString();
+    }
+  }
+  return undefined;
+}
+
+const url = databaseUrl();
 if (!url) {
+  if (process.argv.includes("--if-configured")) {
+    console.log("No database URL configured; skipping migrations.");
+    process.exit(0);
+  }
   console.error("DATABASE_URL is not set.");
   process.exit(1);
 }

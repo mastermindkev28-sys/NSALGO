@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/db/seed";
+import { databaseUrl } from "@/db/url";
 import { AuthCard } from "@/features/auth/auth-card";
 import { LoginForm } from "@/features/auth/forms";
 import { getViewer } from "@/services/membership";
@@ -13,7 +14,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const viewer = await getViewer();
   const next = sp.next?.startsWith("/") && !sp.next.startsWith("//") ? sp.next : undefined;
   if (viewer.user) redirect(next ?? "/dashboard");
-  const showDemo = (process.env.DATA_MODE ?? "mock") === "mock" && !process.env.DATABASE_URL;
+  const showDemo = (process.env.DATA_MODE ?? "mock") === "mock" && !databaseUrl();
   return (
     <AuthCard
       title="Welcome back"
