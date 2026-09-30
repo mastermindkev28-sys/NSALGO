@@ -21,6 +21,7 @@ import { MockCalendarProvider, MockCongressProvider, MockInsiderProvider, MockIn
 import { MockMarketDataProvider } from "./mock/market";
 import { MockNewsProvider } from "./mock/news";
 import { MockOptionsDataProvider } from "./mock/options";
+import { withFallback } from "./fallback";
 import { PolygonMarketDataProvider, PolygonNewsProvider, PolygonOptionsProvider } from "./polygon";
 import { Sec13fProvider, SecInsiderProvider } from "./sec";
 import {
@@ -30,18 +31,26 @@ import {
   UnusualWhalesInsiderProvider,
   UnusualWhalesOptionsProvider,
 } from "./unusualwhales";
-import type { ProviderRegistry } from "./types";
+import { UnusualWhalesMarketDataProvider, UnusualWhalesNewsProvider } from "./unusualwhales/market";
+import type { MarketDataProvider, NewsProvider, ProviderRegistry } from "./types";
 import { unavailableProvider } from "./unavailable";
 
 let registry: ProviderRegistry | undefined;
 
 function buildProduction(): ProviderRegistry {
   const e = env();
-  const market =
+  const uw = e.UNUSUAL_WHALES_API_KEY ? new UnusualWhalesClient(e.UNUSUAL_WHALES_API_KEY) : undefined;
+  // Unusual Whales backs up quotes and news: it serves them outright when Polygon has no
+  // key, and takes over while Polygon rejects its key.
+  const polygonMarket =
     e.MARKET_DATA_PROVIDER === "polygon" && e.MARKET_DATA_API_KEY
       ? new PolygonMarketDataProvider(e.MARKET_DATA_API_KEY, e.MARKET_DATA_DELAY_MINUTES)
-      : unavailableProvider("Market data", "MARKET_DATA_API_KEY");
-  const uw = e.UNUSUAL_WHALES_API_KEY ? new UnusualWhalesClient(e.UNUSUAL_WHALES_API_KEY) : undefined;
+      : undefined;
+  const uwMarket = uw ? new UnusualWhalesMarketDataProvider(uw) : undefined;
+  const market =
+    polygonMarket && uwMarket
+      ? withFallback<MarketDataProvider>(polygonMarket, uwMarket)
+      : (polygonMarket ?? uwMarket ?? unavailableProvider("Market data", "MARKET_DATA_API_KEY"));
   // An explicit *_PROVIDER wins; otherwise Unusual Whales takes the slot when its key is set.
   const pick = (explicit: string | undefined, fallback: string) => explicit ?? (uw ? "unusualwhales" : fallback);
 
@@ -54,7 +63,10 @@ function buildProduction(): ProviderRegistry {
         ? new PolygonOptionsProvider(optionsKey, e.MARKET_DATA_DELAY_MINUTES, flowSymbols(e.OPTIONS_FLOW_SYMBOLS))
         : unavailableProvider("Options data", optionsVendor === "unusualwhales" ? "UNUSUAL_WHALES_API_KEY" : "OPTIONS_API_KEY");
   const newsKey = e.NEWS_API_KEY ?? (e.NEWS_PROVIDER === "polygon" ? e.MARKET_DATA_API_KEY : undefined);
-  const news = e.NEWS_PROVIDER === "polygon" && newsKey ? new PolygonNewsProvider(newsKey) : unavailableProvider("News", "NEWS_API_KEY");
+  const polygonNews = e.NEWS_PROVIDER === "polygon" && newsKey ? new PolygonNewsProvider(newsKey) : undefined;
+  const uwNews = uw ? new UnusualWhalesNewsProvider(uw) : undefined;
+  const news =
+    polygonNews && uwNews ? withFallback<NewsProvider>(polygonNews, uwNews) : (polygonNews ?? uwNews ?? unavailableProvider("News", "NEWS_API_KEY"));
   const insiderVendor = pick(e.INSIDER_PROVIDER, "sec");
   const insiders =
     insiderVendor === "unusualwhales" && uw
