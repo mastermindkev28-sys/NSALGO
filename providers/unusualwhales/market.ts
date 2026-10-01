@@ -1,9 +1,10 @@
 import "server-only";
 /**
- * Unusual Whales market data and news: quotes from stock-state, candles from
- * ohlc, sector ETFs, and movers from the stock screener. The public API has no
- * index quotes (SPX, VIX, yields) and no ticker search, so index symbols are
- * omitted and search runs over the NSALGO universe. Headlines carry no
+ * Unusual Whales market data and news: quotes from stock-state (crypto from
+ * the crypto pair state), candles from ohlc, sector ETFs, and movers and
+ * breadth from the stock screener. Index, futures and yield data need a higher
+ * API tier and there is no ticker search, so those symbols are omitted and
+ * search runs over the NSALGO universe. Headlines carry no
  * article link or summary; those fields stay empty.
  */
 import { createHash } from "node:crypto";
@@ -65,10 +66,13 @@ function sessionOf(marketTime: string | undefined): MarketSessionState {
   }
 }
 
-/** Index-style symbols in the universe that stock-state does not serve. */
+/** BTCUSD → BTC-USD, the pair format of the crypto endpoints. */
+const cryptoPair = (symbol: string) => (lookupSymbol(symbol)?.assetClass === "crypto" ? `${symbol.slice(0, -3)}-${symbol.slice(-3)}` : null);
+
+/** Index, rate, future and FX symbols: CBOE index data and futures need a higher API tier. */
 const unsupported = (symbol: string) => {
   const cls = lookupSymbol(symbol)?.assetClass;
-  return cls !== undefined && cls !== "equity" && cls !== "etf";
+  return cls !== undefined && cls !== "equity" && cls !== "etf" && cls !== "crypto";
 };
 
 async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
@@ -96,6 +100,15 @@ interface UwStockState {
   prev_close?: string;
 }
 
+interface UwCryptoState {
+  timestamp?: string;
+  close_24h?: string;
+  high_24h?: string;
+  low_24h?: string;
+  open_24h?: string;
+  volume_24h?: string;
+}
+
 interface UwCandle {
   open: string;
   high: string;
@@ -120,6 +133,17 @@ interface UwScreenerRow {
   relative_volume?: string;
   issue_type?: string;
   date?: string;
+}
+
+interface UwBreadthRow {
+  ticker: string;
+  issue_type?: string;
+  close?: string;
+  prev_close?: string;
+  sma_50?: number | string | null;
+  sma_200?: number | string | null;
+  week_52_high?: string;
+  week_52_low?: string;
 }
 
 interface UwSectorEtf {
@@ -153,6 +177,8 @@ export class UnusualWhalesMarketDataProvider implements MarketDataProvider {
     let firstError: unknown;
     const rows = await mapLimit(wanted, 5, async (sym) => {
       try {
+        const pair = cryptoPair(sym);
+        if (pair) return { sym, crypto: await this.c.get<UwCryptoState>(`/api/crypto/${pair}/state`) };
         return { sym, s: await this.c.get<UwStockState>(`/api/stock/${encodeURIComponent(sym)}/stock-state`) };
       } catch (e) {
         firstError ??= e;
@@ -161,6 +187,29 @@ export class UnusualWhalesMarketDataProvider implements MarketDataProvider {
     });
     const quotes: Quote[] = [];
     for (const r of rows) {
+      if (r?.crypto) {
+        // Crypto trades around the clock; change is measured over the trailing 24 hours.
+        const last = num(r.crypto.close_24h);
+        const open = num(r.crypto.open_24h);
+        quotes.push({
+          symbol: r.sym,
+          name: lookupSymbol(r.sym)?.name ?? r.sym,
+          assetClass: "crypto",
+          last,
+          change: last !== null && open !== null ? last - open : null,
+          changePercent: pct(last, open),
+          open,
+          high: num(r.crypto.high_24h),
+          low: num(r.crypto.low_24h),
+          prevClose: open,
+          volume: num(r.crypto.volume_24h),
+          avgVolume: null,
+          timestamp: r.crypto.timestamp ?? null,
+          marketState: "open",
+          unit: "usd",
+        });
+        continue;
+      }
       if (!r?.s) continue;
       const info = lookupSymbol(r.sym);
       const last = num(r.s.close);
@@ -194,6 +243,8 @@ export class UnusualWhalesMarketDataProvider implements MarketDataProvider {
     const sym = symbol.toUpperCase();
     if (unsupported(sym)) return fail("UNSUPPORTED", `${sym} history is not available from ${LABEL}.`);
     const daily = interval === "1d" || interval === "1w";
+    const pair = cryptoPair(sym);
+    if (pair) return this.cryptoHistory(pair, range, interval);
     try {
       const rows = await this.c.get<UwCandle[]>(`/api/stock/${encodeURIComponent(sym)}/ohlc/${interval}`, { timeframe: range, limit: 2500 });
       const bars: Bar[] = [];
@@ -203,6 +254,31 @@ export class UnusualWhalesMarketDataProvider implements MarketDataProvider {
         const [o, h, l, c] = [num(r.open), num(r.high), num(r.low), num(r.close)];
         if (!Number.isFinite(time) || o === null || h === null || l === null || c === null) continue;
         bars.push({ time, open: o, high: h, low: l, close: c, volume: r.volume ?? 0 });
+      }
+      bars.sort((a, b) => a.time - b.time);
+      return ok(bars, this.c.meta());
+    } catch (e) {
+      return errorResult(e, "Price history");
+    }
+  }
+
+  private async cryptoHistory(pair: string, range: HistoryRange, interval: HistoryInterval): Promise<DataResult<Bar[]>> {
+    const now = new Date();
+    const from =
+      range === "YTD"
+        ? Date.UTC(now.getUTCFullYear(), 0, 1) / 1000
+        : now.getTime() / 1000 - ({ "1D": 1, "5D": 5, "1M": 31, "3M": 92, "6M": 183, "1Y": 366, "5Y": 1827 } as Record<string, number>)[range]! * 86_400;
+    try {
+      const rows = await this.c.get<{ open: string; high: string; low: string; close: string; volume?: string; start_time: string }[]>(
+        `/api/crypto/${pair}/ohlc/${interval}`,
+        { limit: 500 },
+      );
+      const bars: Bar[] = [];
+      for (const r of rows ?? []) {
+        const [o, h, l, c] = [num(r.open), num(r.high), num(r.low), num(r.close)];
+        const time = Math.floor(Date.parse(r.start_time) / 1000);
+        if (!Number.isFinite(time) || time < from || o === null || h === null || l === null || c === null) continue;
+        bars.push({ time, open: o, high: h, low: l, close: c, volume: num(r.volume) ?? 0 });
       }
       bars.sort((a, b) => a.time - b.time);
       return ok(bars, this.c.meta());
@@ -227,7 +303,7 @@ export class UnusualWhalesMarketDataProvider implements MarketDataProvider {
   async getSymbol(symbol: string): Promise<DataResult<SymbolInfo>> {
     const sym = symbol.toUpperCase();
     const local = lookupSymbol(sym);
-    if (local && unsupported(sym)) return ok({ symbol: local.symbol, name: local.name, exchange: local.exchange, assetClass: local.assetClass }, this.c.meta());
+    if (local && (unsupported(sym) || cryptoPair(sym))) return ok({ symbol: local.symbol, name: local.name, exchange: local.exchange, assetClass: local.assetClass }, this.c.meta());
     try {
       const r = await this.c.get<UwInfo>(`/api/stock/${encodeURIComponent(sym)}/info`);
       if (!r?.symbol) return local ? ok(local, this.c.meta()) : fail("NOT_FOUND", "Unknown symbol");
@@ -316,8 +392,62 @@ export class UnusualWhalesMarketDataProvider implements MarketDataProvider {
     }
   }
 
+  private breadthCache: { at: number; data: BreadthSnapshot } | undefined;
+
+  /**
+   * Breadth over the ~500 largest US common stocks (an S&P 500 proxy), from
+   * the stock screener: close, previous close, 50/200-day SMAs and the 52-week
+   * range per stock. Cached for five minutes.
+   */
   async getBreadth(): Promise<DataResult<BreadthSnapshot>> {
-    return fail("UNSUPPORTED", `Market breadth is not available from ${LABEL}.`);
+    if (this.breadthCache && Date.now() - this.breadthCache.at < 5 * 60_000) return ok(this.breadthCache.data, this.c.meta());
+    try {
+      // The screener ignores `page`, so one call of its 500-row maximum is the whole sample.
+      const rows = await this.c.get<UwBreadthRow[]>("/api/screener/stocks", { order: "marketcap", order_direction: "desc", limit: 500 });
+      const seen = new Set<string>();
+      let adv = 0, dec = 0, unch = 0, highs = 0, lows = 0, above50 = 0, has50 = 0, above200 = 0, has200 = 0;
+      for (const r of rows ?? []) {
+        if (!r || seen.has(r.ticker) || (r.issue_type && r.issue_type !== "Common Stock")) continue;
+        seen.add(r.ticker);
+        const c = num(r.close);
+        const prev = num(r.prev_close);
+        if (c === null) continue;
+        if (prev !== null) {
+          if (c > prev) adv++;
+          else if (c < prev) dec++;
+          else unch++;
+        }
+        const hi = num(r.week_52_high);
+        const lo = num(r.week_52_low);
+        if (hi !== null && c >= hi) highs++;
+        if (lo !== null && c <= lo) lows++;
+        const s50 = num(r.sma_50);
+        const s200 = num(r.sma_200);
+        if (s50 !== null) {
+          has50++;
+          if (c > s50) above50++;
+        }
+        if (s200 !== null) {
+          has200++;
+          if (c > s200) above200++;
+        }
+      }
+      if (!seen.size) return fail("PROVIDER_UNAVAILABLE", "Breadth temporarily unavailable.");
+      const data: BreadthSnapshot = {
+        advancers: adv,
+        decliners: dec,
+        unchanged: unch,
+        newHighs: highs,
+        newLows: lows,
+        pctAbove50d: has50 ? Math.round((above50 / has50) * 100) : null,
+        pctAbove200d: has200 ? Math.round((above200 / has200) * 100) : null,
+        universe: `${seen.size} largest US stocks by market cap`,
+      };
+      this.breadthCache = { at: Date.now(), data };
+      return ok(data, this.c.meta());
+    } catch (e) {
+      return errorResult(e, "Breadth");
+    }
   }
 }
 
