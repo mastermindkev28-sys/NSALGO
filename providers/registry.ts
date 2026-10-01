@@ -31,6 +31,7 @@ import {
   UnusualWhalesInsiderProvider,
   UnusualWhalesOptionsProvider,
 } from "./unusualwhales";
+import { UnusualWhalesInstitutionalProvider } from "./unusualwhales/institutional";
 import { UnusualWhalesMarketDataProvider, UnusualWhalesNewsProvider } from "./unusualwhales/market";
 import type { MarketDataProvider, NewsProvider, ProviderRegistry } from "./types";
 import { unavailableProvider } from "./unavailable";
@@ -74,7 +75,11 @@ function buildProduction(): ProviderRegistry {
       : insiderVendor === "sec" && e.sec
         ? new SecInsiderProvider(e.sec)
         : unavailableProvider("SEC insider", insiderVendor === "unusualwhales" ? "UNUSUAL_WHALES_API_KEY" : "SEC_API_CONFIG");
-  const institutional = e.sec ? new Sec13fProvider(e.sec) : unavailableProvider("Institutional", "SEC_API_CONFIG");
+  const institutional = e.sec
+    ? new Sec13fProvider(e.sec)
+    : uw
+      ? new UnusualWhalesInstitutionalProvider(uw)
+      : unavailableProvider("Institutional", "SEC_API_CONFIG");
   const congressVendor = pick(e.CONGRESS_PROVIDER, "vendor");
   const congress =
     congressVendor === "unusualwhales" && uw
